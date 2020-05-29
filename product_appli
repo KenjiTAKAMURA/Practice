@@ -1,0 +1,65 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu May 28 12:40:01 2020
+
+@author: ZA88400
+"""
+
+import tkinter as tk
+import numpy as np
+from numpy.random import randint
+
+class Application(tk.Frame):
+    def __init__(self,master):
+        super().__init__(master)
+        self.pack()
+
+        self.width=450
+        self.height=300
+
+        master.geometry(str(self.width)+"x"+str(self.height)) #ウィンドウの作成
+
+        master.title("積の計算") #タイトル
+        self.master.config(bg="pink") #ウィンドウの背景色
+
+        self.createWidgets() #ウィジェットの作成
+
+    def createWidgets(self): #ウィジェットの作成
+        #和の計算をするためのテキストボックスやラベル、ボタンの作成
+        a = randint(1,100)
+        b = randint(1,100)
+        right_answer = a*b
+        
+        self.question1_1 = tk.Label(text=a,fg="black",bg="pink",font=("Helvetica",30))
+        self.question1_1.place(x=10,y=100)
+        self.question1_2 = tk.Label(text=b,fg="black",bg="pink",font=("Helvetica",30))
+        self.question1_2.place(x=180,y=100)
+        self.entry1 = tk.Entry(width=15)
+        self.entry1.place(x=350,y=100)
+
+
+        self.label2 = tk.Label(text="×",fg="black",bg="pink",font=("Helvetica",30,"bold"))
+        self.label2.place(x=128,y=103)
+        self.label3 = tk.Label(text="=",fg="black",bg="pink",font=("Helvetica",30,"bold"))
+        self.label3.place(x=298,y=103)
+
+        self.button1 = tk.Button(text="計算する",command=self.button1Click(right_answer),width=30)
+        self.button1.place(x=110, y=180)
+
+    def button1Click(self,n): #ボタンが押された時に呼ばれるメソッド
+        def x():
+ #       if self.entry1.get() != "" :
+#            self.answer1.delete(0,tk.END)
+#            self.answer1.insert(0,right_answer) #計算結果をentry3に表示
+            self.answer1 = tk.Label(text=n,fg="black",bg="pink",font=("Helvetica",30))
+            self.answer1.place(x=110, y=210)
+        return x
+            
+def main():
+    win = tk.Tk()
+    win.resizable(width=False, height=False) #ウィンドウを固定サイズに
+    app = Application(master=win)
+    app.mainloop()
+
+if __name__ == "__main__":
+    main()
