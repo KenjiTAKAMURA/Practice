@@ -31,7 +31,7 @@ get_ipython().run_line_magic('matplotlib', 'inline')
 np.random.seed(seed=0)
 
 
-# In[ ]:
+# In[2]:
 
 
 if os.path.exists('mnist_784'):
@@ -52,7 +52,7 @@ t_train = np.eye(10)[t_train.astype("int")] ### eyeは引数のサイズの単�
 t_test = np.eye(10)[t_test.astype("int")]
 
 
-# In[4]:
+# In[2]:
 
 
 import pandas as pd
@@ -86,7 +86,7 @@ t_test = np.eye(10)[t_test.astype("int")]
 # 
 # データは 1チャンネル 28×28 の配列となっています。
 
-# In[14]:
+# In[3]:
 
 
 # データを5つ表示
@@ -100,7 +100,7 @@ for i in range(5):
 # ### Affine 変換層とコスト関数
 # Affine 変換層とコスト関数の実装になります。問題にはなっていませんが、復習も兼ねて読み返してください。
 
-# In[ ]:
+# In[4]:
 
 
 def softmax(x):
@@ -126,7 +126,7 @@ def cross_entropy_error(y, t):
     return -np.sum(np.log(y[np.arange(batch_size), t] + 1e-7)) / batch_size
 
 
-# In[ ]:
+# In[5]:
 
 
 class Relu:
@@ -239,7 +239,7 @@ class SoftmaxWithLoss:
 # im2colの説明は以上です。それでは実際にim2colを実装していきましょう。<br>
 # <img src="im2col.png">
 
-# In[25]:
+# In[6]:
 
 
 def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
@@ -268,14 +268,25 @@ def im2col(input_data, filter_h, filter_w, stride=1, pad=0):
 # ### 確認用セル
 # 以下のセルを実行して`im2col`の実装が正しいか確認してください。
 
-# In[29]:
+# In[78]:
 
 
 dummy_imgs = np.arange(135).reshape(5,3,3,3) #引数1:1つの訓練データ（画像），引数2:RGB，引数3と引数4:縦×横の値
 print(dummy_imgs)
 dummy_kernels = np.arange(48).reshape(4,3,2,2)
-dummy_conv = np.dot(im2col(dummy_imgs, 2,2, pad=1), dummy_kernels.reshape(4,12).T)
-print(im2col(dummy_imgs, 2,2, pad=1).shape)
+#print(dummy_kernels.reshape(4,12))
+dummy_conv = np.dot(im2col(dummy_imgs, 2,2, pad=1), dummy_kernels.reshape(4,12).T)#kernelを2次元にして転置する
+im_col = im2col(dummy_imgs, 2,2, pad=1)
+
+print('＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃＃')
+#print(test_col.reshape(5,4,4,3,2,2)) # フィルタ２×２の単位で表示される
+#print(test_col.reshape(5,4,4,3,2,2).transpose(0, 3, 4, 5, 1, 2)[0][0][0][1])
+im_col_im = col2im(im_col, (5,3,3,3), 2,2, pad=1)
+print(im_col_im)
+
+#numpy配列の比較
+np.array_equal(dummy_imgs*4,im_col_im)
+#compare = im_col == im_col_im
 
 
 # In[17]:
@@ -372,30 +383,30 @@ else:
 # 
 #  - `col2im` の実装問題は、問1の解答と同じコードで問題ありません。 
 
-# In[ ]:
+# In[29]:
 
 
 def col2im(col, input_shape, filter_h, filter_w, stride=1, pad=0):
 
     N, C, H, W = input_shape
-    out_h = #### 問2-1 (問1-1 と同じ) ####
-    out_w = #### 問2-2 (問1-2 と同じ) ####
-    col = col.reshape(N, out_h, out_w, C, filter_h, filter_w).transpose(0, 3, 4, 5, 1, 2)
+    out_h = int(((H + 2*pad) - filter_h)/stride) + 1 #### 問2-1 (問1-1 と同じ) ####
+    out_w = int(((W + 2*pad) - filter_w)/stride) + 1 #### 問2-2 (問1-2 と同じ) ####
+    col = col.reshape(N, out_h, out_w, C, filter_h, filter_w).transpose(0, 3, 4, 5, 1, 2) #N→C→filter_h, filter_w→out_h, out_w
 
     img = np.zeros((N, C, H + 2*pad + stride - 1, W + 2*pad + stride - 1))
     for y in range(filter_h):
         y_max = y + stride*out_h
         for x in range(filter_w):
             x_max = x + stride*out_w
-            img[#### 問2-3 (問1-4 と同じ) ####] += col[:, :, y, x, :, :]
+            img[:, :,y:y_max:stride,x:x_max:stride] += col[:, :, y, x, :, :] #### 問2-3 (問1-4 と同じ) #### 上書きして
 
-    return img[:, :, pad:H + pad, pad:W + pad]
+    return img[:, :, pad:H + pad, pad:W + pad] #padを切り取る
 
 
 # ## Convolution
 # 3. <font color="Red">作成した`im2col`, `col2im`を使用し、畳み込み層 `convolution` を完成させてください。</font>
 
-# In[ ]:
+# In[30]:
 
 
 class Convolution:
@@ -417,13 +428,13 @@ class Convolution:
     def forward(self, x):
         FN, C, FH, FW = self.W.shape
         N, C, H, W = x.shape
-        out_h = #### 問3-1 ####
-        out_w = #### 問3-2 ####
+        out_h = int(((H + 2*self.pad) - FH)/self.stride) + 1 #### 問3-1 ####
+        out_w = int(((W + 2*self.pad) - FW)/self.stride) + 1 #### 問3-2 ####
 
         col = im2col(x, FH, FW, self.stride, self.pad)
-        col_W = #### 問3-3 ####
+        col_W = self.W.reshape(FN, -1).T #### 問3-3 ####
 
-        out = #### 問3-4 ####
+        out = np.dot(col, col_W) + self.b ##### 問3-4 ####
         out = out.reshape(N, out_h, out_w, -1).transpose(0, 3, 1, 2)
 
         self.x = x
@@ -449,7 +460,7 @@ class Convolution:
 # ## Pooling の実装
 # 4. <font color="Red">作成した`im2col`, `col2im`を使用し、畳み込み層 `pooling` を完成させてください。</font>
 
-# In[ ]:
+# In[31]:
 
 
 class Pooling:
@@ -464,14 +475,14 @@ class Pooling:
 
     def forward(self, x):
         N, C, H, W = x.shape
-        out_h = #### 問4-1 ####
-        out_w = #### 問4-2 ####
+        out_h = int(((H + 2*self.pad) - self.pool_h)/self.stride) + 1 #### 問4-1 ####
+        out_w = int(((W + 2*self.pad) - self.pool_w)/self.stride) + 1 #### 問4-2 ####
 
         col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
         col = col.reshape(-1, self.pool_h*self.pool_w)
 
         arg_max = np.argmax(col, axis=1)
-        out = #### 問4-3 ####
+        out = np.max(col, axis=1) #### 問4-3 ####
         out = out.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
 
         self.x = x
@@ -495,7 +506,7 @@ class Pooling:
 
 # ## ネットワーク定義
 
-# In[ ]:
+# In[32]:
 
 
 class SimpleConvNet:
@@ -573,13 +584,13 @@ class SimpleConvNet:
 # 
 # convolution や pooling はGPUでは高速ですが、CPUで実行した場合は非常に実行時間がかかるため、学習セルの実行には時間を要します。10~15分ほど要しますので、ご注意ください。
 
-# In[ ]:
+# In[33]:
 
 
 network = SimpleConvNet(input_dim=(1,28,28),  output_size=10, weight_init_std=0.01)
 
 
-# In[ ]:
+# In[34]:
 
 
 class SGD:
@@ -591,7 +602,7 @@ class SGD:
             params[key] -= self.lr * grads[key] 
 
 
-# In[ ]:
+# In[35]:
 
 
 acc_list = []
@@ -599,7 +610,7 @@ sgd = SGD(lr = 0.01)
 batch_size = 256
 
 
-# In[ ]:
+# In[36]:
 
 
 for epoch in range(5):
